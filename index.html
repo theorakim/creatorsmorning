@@ -1,0 +1,1158 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>창작하는아침 캘린더</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='38' cy='45' r='14' fill='%237B5EA7'/><circle cx='62' cy='45' r='14' fill='%237B5EA7'/><circle cx='50' cy='65' r='14' fill='%235A3D7A'/><circle cx='32' cy='62' r='12' fill='%239B7EC7' opacity='.7'/><circle cx='68' cy='62' r='12' fill='%239B7EC7' opacity='.7'/><circle cx='50' cy='82' r='10' fill='%235A3D7A' opacity='.8'/><rect x='48' y='15' width='4' height='20' rx='2' fill='%238A9B7A'/><ellipse cx='58' cy='22' rx='8' ry='5' fill='%238A9B7A' transform='rotate(-30 58 22)'/></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg: #F7F3EB;
+      --bg-card: #FFFFFF;
+      --text: #2D2438;
+      --text-light: #6E5F7E;
+      --text-muted: #A99BB8;
+      --grape: #7B5EA7;
+      --grape-light: #9B7EC7;
+      --grape-dark: #5A3D7A;
+      --grape-deep: #3D2456;
+      --grape-glow: rgba(123, 94, 167, 0.30);
+      --gold: #D4A574;
+      --gold-glow: rgba(212, 165, 116, 0.45);
+      --vine: #8A9B7A;
+      --empty: #DDD5C8;
+      --sunday: #C17575;
+      --saturday: #7575C1;
+      --shadow-sm: 0 1px 3px rgba(45, 36, 56, 0.06);
+      --shadow-md: 0 4px 16px rgba(45, 36, 56, 0.08);
+      --shadow-lg: 0 8px 32px rgba(45, 36, 56, 0.10);
+    }
+
+    body {
+      font-family: 'Noto Sans KR', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100dvh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    /* ── Login Screen ── */
+    #login-screen {
+      text-align: center;
+      max-width: 380px;
+      width: 100%;
+    }
+
+    .grape-cluster {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 32px;
+    }
+    .grape-row {
+      display: flex;
+      gap: 5px;
+      margin-bottom: 5px;
+    }
+    .grape-dot {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 30%, var(--grape-light), var(--grape-dark));
+      box-shadow: inset 0 -2px 4px rgba(0,0,0,0.15), 0 1px 2px rgba(0,0,0,0.1);
+    }
+    .grape-dot.muted {
+      background: radial-gradient(circle at 35% 30%, var(--grape), var(--grape-deep));
+      opacity: 0.5;
+    }
+    .grape-stem {
+      width: 2px;
+      height: 18px;
+      background: var(--vine);
+      border-radius: 1px;
+      margin-bottom: 2px;
+    }
+    .grape-leaf {
+      width: 16px;
+      height: 10px;
+      background: var(--vine);
+      border-radius: 50% 50% 50% 0;
+      transform: rotate(-30deg);
+      margin-bottom: -8px;
+      margin-left: 8px;
+      align-self: flex-start;
+      position: relative;
+      top: 2px;
+    }
+
+    .login-title {
+      font-family: 'Nanum Myeongjo', serif;
+      font-weight: 800;
+      font-size: 2.2rem;
+      letter-spacing: -0.03em;
+      line-height: 1.2;
+      color: var(--grape-deep);
+      margin-bottom: 8px;
+    }
+
+    .login-desc {
+      font-weight: 300;
+      font-size: 0.9rem;
+      color: var(--text-light);
+      line-height: 1.6;
+      margin-bottom: 36px;
+    }
+
+    .input-group {
+      position: relative;
+      margin-bottom: 16px;
+    }
+
+    .input-group input {
+      width: 100%;
+      padding: 14px 16px;
+      font-family: 'Noto Sans KR', sans-serif;
+      font-size: 0.95rem;
+      border: 1.5px solid var(--empty);
+      border-radius: 10px;
+      background: var(--bg-card);
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.25s, box-shadow 0.25s;
+    }
+    .input-group input:focus {
+      border-color: var(--grape);
+      box-shadow: 0 0 0 3px var(--grape-glow);
+    }
+    .input-group input::placeholder {
+      color: var(--text-muted);
+      font-weight: 300;
+    }
+
+    .login-btn {
+      width: 100%;
+      padding: 14px;
+      font-family: 'Nanum Myeongjo', serif;
+      font-size: 1.05rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      color: #fff;
+      background: var(--grape);
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+    }
+    .login-btn:hover {
+      background: var(--grape-dark);
+      box-shadow: var(--shadow-md);
+    }
+    .login-btn:active {
+      transform: scale(0.98);
+    }
+    .login-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .login-error {
+      margin-top: 14px;
+      padding: 10px 14px;
+      font-size: 0.82rem;
+      color: #9B4D4D;
+      background: #FDF0F0;
+      border-radius: 8px;
+      display: none;
+      line-height: 1.5;
+    }
+    .login-error.show { display: block; }
+
+    .login-footer {
+      margin-top: 32px;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+    .login-footer a {
+      color: var(--grape);
+      text-decoration: none;
+    }
+
+    /* ── App Screen ── */
+    #app-screen {
+      display: none;
+      max-width: 440px;
+      width: 100%;
+    }
+    #app-screen.active { display: block; }
+    #login-screen.hidden { display: none; }
+
+    .app-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+    }
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .user-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--empty);
+      object-fit: cover;
+    }
+    .user-name {
+      font-family: 'Nanum Myeongjo', serif;
+      font-weight: 700;
+      font-size: 1.1rem;
+    }
+    .user-name-suffix {
+      font-family: 'Noto Sans KR', sans-serif;
+      font-weight: 300;
+      font-size: 0.85rem;
+      color: var(--text-light);
+    }
+    .logout-btn {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-family: 'Noto Sans KR', sans-serif;
+      transition: color 0.2s;
+    }
+    .logout-btn:hover { color: var(--text); }
+
+    /* ── Calendar Card ── */
+    .calendar-card {
+      background: var(--bg-card);
+      border-radius: 16px;
+      box-shadow: var(--shadow-md);
+      padding: 24px 20px 20px;
+      margin-bottom: 20px;
+    }
+
+    .month-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+    .month-title {
+      font-family: 'Nanum Myeongjo', serif;
+      font-weight: 700;
+      font-size: 1.25rem;
+      letter-spacing: -0.01em;
+    }
+    .month-btn {
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: none;
+      border: 1.5px solid var(--empty);
+      border-radius: 50%;
+      cursor: pointer;
+      color: var(--text-light);
+      font-size: 1rem;
+      transition: all 0.2s;
+    }
+    .month-btn:hover {
+      border-color: var(--grape);
+      color: var(--grape);
+      background: rgba(123, 94, 167, 0.05);
+    }
+
+    .day-headers {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+      margin-bottom: 8px;
+    }
+    .day-header {
+      text-align: center;
+      font-size: 0.72rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      padding: 4px 0;
+      letter-spacing: 0.04em;
+    }
+    .day-header.sun { color: var(--sunday); }
+    .day-header.sat { color: var(--saturday); }
+
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+    }
+
+    .day-cell {
+      aspect-ratio: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.82rem;
+      border-radius: 50%;
+      position: relative;
+      cursor: default;
+      color: var(--text-muted);
+      font-weight: 400;
+      transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .day-cell.current-month {
+      color: var(--text-light);
+    }
+    .day-cell.sun { color: var(--sunday); opacity: 0.6; }
+    .day-cell.sat { color: var(--saturday); opacity: 0.6; }
+    .day-cell.current-month.sun { opacity: 1; }
+    .day-cell.current-month.sat { opacity: 1; }
+
+    .day-cell.active {
+      background: radial-gradient(circle at 38% 32%, var(--grape-light), var(--grape));
+      color: #fff;
+      font-weight: 500;
+      box-shadow: inset 0 -2px 4px rgba(0,0,0,0.12), 0 1px 3px var(--grape-glow);
+      cursor: pointer;
+      opacity: 1 !important;
+    }
+    .day-cell.active.sun,
+    .day-cell.active.sat {
+      color: #fff;
+    }
+    .day-cell.active:hover {
+      transform: scale(1.15);
+      box-shadow: inset 0 -2px 4px rgba(0,0,0,0.12), 0 2px 8px var(--grape-glow);
+    }
+
+    .day-cell.active.multi {
+      background: radial-gradient(circle at 38% 32%, var(--grape), var(--grape-dark));
+      box-shadow: inset 0 -2px 4px rgba(0,0,0,0.18), 0 2px 6px var(--grape-glow);
+    }
+
+    .day-cell.today::after {
+      content: '';
+      position: absolute;
+      inset: -3px;
+      border-radius: 50%;
+      border: 2px solid var(--gold);
+      box-shadow: 0 0 8px var(--gold-glow);
+      pointer-events: none;
+    }
+
+    .day-cell.grape-pop {
+      animation: grapePop 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+      animation-delay: var(--pop-delay, 0ms);
+      opacity: 0;
+      transform: scale(0);
+    }
+
+    @keyframes grapePop {
+      0% { opacity: 0; transform: scale(0); }
+      60% { opacity: 1; transform: scale(1.12); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+
+    /* ── Tooltip ── */
+    .tooltip {
+      display: none;
+      position: fixed;
+      background: var(--grape-deep);
+      color: #fff;
+      font-size: 0.75rem;
+      padding: 6px 10px;
+      border-radius: 6px;
+      pointer-events: none;
+      z-index: 100;
+      max-width: 200px;
+      line-height: 1.4;
+      box-shadow: var(--shadow-md);
+    }
+    .tooltip.show { display: block; }
+
+    /* ── Stats ── */
+    .stats-bar {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .stat-item {
+      flex: 1;
+      min-width: 110px;
+      background: var(--bg-card);
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: var(--shadow-sm);
+    }
+    .stat-number {
+      font-family: 'Nanum Myeongjo', serif;
+      font-weight: 800;
+      font-size: 1.8rem;
+      color: var(--grape);
+      letter-spacing: -0.02em;
+      line-height: 1;
+    }
+    .stat-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+      font-weight: 400;
+    }
+
+    .empty-message {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      line-height: 1.7;
+    }
+    .empty-message .big {
+      font-size: 2rem;
+      margin-bottom: 12px;
+    }
+
+    .full-month-msg {
+      text-align: center;
+      margin-top: 16px;
+      padding: 12px;
+      background: linear-gradient(135deg, rgba(123,94,167,0.08), rgba(212,165,116,0.08));
+      border-radius: 10px;
+      font-family: 'Nanum Myeongjo', serif;
+      font-size: 0.9rem;
+      color: var(--grape-dark);
+    }
+
+    /* ── Loading ── */
+    .spinner {
+      display: inline-block;
+      width: 18px;
+      height: 18px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      vertical-align: middle;
+      margin-right: 6px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .page-loading {
+      position: fixed;
+      inset: 0;
+      background: rgba(247, 243, 235, 0.85);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 50;
+      backdrop-filter: blur(4px);
+    }
+    .page-loading.show { display: flex; }
+    .page-loading-inner {
+      text-align: center;
+      color: var(--grape);
+    }
+    .page-loading-inner .big-spinner {
+      width: 36px;
+      height: 36px;
+      border: 3px solid var(--grape-glow);
+      border-top-color: var(--grape);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      margin: 0 auto 14px;
+    }
+    .page-loading-inner p {
+      font-size: 0.9rem;
+      color: var(--text-light);
+    }
+
+    /* ── Config Banner ── */
+    .config-banner {
+      display: none;
+      margin-bottom: 16px;
+      padding: 12px 14px;
+      background: #FFF8F0;
+      border: 1px solid #F0DCC8;
+      border-radius: 10px;
+      font-size: 0.78rem;
+      color: #8B6E4E;
+      line-height: 1.6;
+    }
+    .config-banner.show { display: block; }
+    .config-banner code {
+      background: rgba(0,0,0,0.06);
+      padding: 1px 5px;
+      border-radius: 3px;
+      font-size: 0.74rem;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 480px) {
+      body { padding: 16px 12px; }
+      .login-title { font-size: 1.8rem; }
+      .calendar-card { padding: 18px 14px 16px; }
+      .day-cell { font-size: 0.75rem; }
+      .stat-item { padding: 12px; }
+      .stat-number { font-size: 1.4rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── Login Screen ── -->
+  <div id="login-screen">
+    <div class="grape-cluster">
+      <div class="grape-leaf"></div>
+      <div class="grape-stem"></div>
+      <div class="grape-row">
+        <div class="grape-dot"></div>
+        <div class="grape-dot"></div>
+      </div>
+      <div class="grape-row">
+        <div class="grape-dot"></div>
+        <div class="grape-dot"></div>
+        <div class="grape-dot"></div>
+      </div>
+      <div class="grape-row">
+        <div class="grape-dot"></div>
+        <div class="grape-dot muted"></div>
+        <div class="grape-dot"></div>
+      </div>
+      <div class="grape-row">
+        <div class="grape-dot muted"></div>
+        <div class="grape-dot"></div>
+      </div>
+      <div class="grape-row">
+        <div class="grape-dot muted"></div>
+      </div>
+    </div>
+
+    <h1 class="login-title">창작하는아침 캘린더</h1>
+    <p class="login-desc">나의 창작하는 아침을 한눈에!</p>
+
+    <div class="input-group">
+      <input type="text" id="username-input" placeholder="작은배 항구 아이디" autocomplete="off" />
+    </div>
+    <button class="login-btn" id="login-btn" onclick="handleLogin()">내 캘린더 보기</button>
+    <div class="login-error" id="login-error"></div>
+
+    <button class="login-btn" id="test-btn" onclick="handleTestLogin()" style="margin-top:10px; background:var(--text-muted);">테스트로 보기 (더미 데이터)</button>
+
+    <div class="login-footer">
+      <a href="https://port.jagunbae.com" target="_blank">작은배 항구</a> 계정으로 로그인
+    </div>
+  </div>
+
+  <!-- ── App Screen ── -->
+  <div id="app-screen">
+    <div class="app-header">
+      <div class="user-info">
+        <img class="user-avatar" id="user-avatar" src="" alt="" />
+        <div>
+          <span class="user-name" id="user-display-name"></span>
+          <span class="user-name-suffix">의 캘린더</span>
+        </div>
+      </div>
+      <button class="logout-btn" onclick="handleLogout()">나가기</button>
+    </div>
+
+    <div class="config-banner" id="config-banner">
+      관리자 설정이 필요합니다. HTML 파일의 <code>CONFIG.apiKey</code>에 Discourse API 키를 입력해주세요.
+    </div>
+
+    <div class="calendar-card">
+      <div class="month-nav">
+        <button class="month-btn" onclick="navigateMonth(-1)" aria-label="이전 달">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 3L5 8L10 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <span class="month-title" id="month-title"></span>
+        <button class="month-btn" onclick="navigateMonth(1)" aria-label="다음 달">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 3L11 8L6 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+
+      <div class="day-headers">
+        <div class="day-header sun">일</div>
+        <div class="day-header">월</div>
+        <div class="day-header">화</div>
+        <div class="day-header">수</div>
+        <div class="day-header">목</div>
+        <div class="day-header">금</div>
+        <div class="day-header sat">토</div>
+      </div>
+
+      <div class="calendar-grid" id="calendar-grid"></div>
+      <div id="calendar-message"></div>
+    </div>
+
+    <div class="stats-bar" id="stats-bar"></div>
+  </div>
+
+  <!-- ── Loading Overlay ── -->
+  <div class="page-loading" id="page-loading">
+    <div class="page-loading-inner">
+      <div class="big-spinner"></div>
+      <p>기록을 불러오는 중...</p>
+    </div>
+  </div>
+
+  <!-- ── Tooltip ── -->
+  <div class="tooltip" id="tooltip"></div>
+
+<script>
+// ═══════════════════════════════════════════════
+//  CONFIG — 관리자가 이 부분을 설정해주세요
+// ═══════════════════════════════════════════════
+const CONFIG = {
+  // Discourse 주소 (끝에 / 없이)
+  discourseUrl: 'https://port.jagunbae.com',
+
+  // 글 작성으로 인정할 action_type 목록
+  // 4 = 새 글(토픽)만 측정
+  actionTypes: [4],
+};
+
+// ═══════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════
+const state = {
+  username: '',
+  displayName: '',
+  avatarUrl: '',
+  year: new Date().getFullYear(),
+  month: new Date().getMonth(),
+  dateMap: {},       // { 'YYYY-MM-DD': { count, titles[] } }
+  fetchedOffsets: {}, // { actionType: offset }
+  fullyFetched: {},  // { actionType: bool }
+  oldestByType: {},  // { actionType: Date }
+};
+
+// ═══════════════════════════════════════════════
+//  UTILS
+// ═══════════════════════════════════════════════
+const $ = (id) => document.getElementById(id);
+
+function toKSTDate(isoString) {
+  return new Date(isoString).toLocaleDateString('en-CA', { timeZone: 'Asia/Seoul' });
+}
+
+function todayKST() {
+  return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Seoul' });
+}
+
+function formatMonth(year, month) {
+  return `${year}년 ${month + 1}월`;
+}
+
+function daysInMonth(year, month) {
+  return new Date(year, month + 1, 0).getDate();
+}
+
+function firstDayOfMonth(year, month) {
+  return new Date(year, month, 1).getDay();
+}
+
+// ═══════════════════════════════════════════════
+//  API (Vercel 서버리스 프록시를 통해 호출)
+// ═══════════════════════════════════════════════
+async function fetchProfile(username) {
+  const resp = await fetch(`/api/profile?username=${encodeURIComponent(username)}`);
+  if (!resp.ok) {
+    const err = new Error(`HTTP ${resp.status}`);
+    err.status = resp.status;
+    throw err;
+  }
+  const data = await resp.json();
+  return data.user;
+}
+
+async function fetchActions(username, actionType, offset = 0) {
+  const params = new URLSearchParams({
+    username,
+    filter: String(actionType),
+    offset: String(offset),
+  });
+  const resp = await fetch(`/api/actions?${params}`);
+  if (!resp.ok) {
+    const err = new Error(`HTTP ${resp.status}`);
+    err.status = resp.status;
+    throw err;
+  }
+  const data = await resp.json();
+  return data.user_actions || [];
+}
+
+// ═══════════════════════════════════════════════
+//  DATA LOADING
+// ═══════════════════════════════════════════════
+function addToDateMap(dateStr, title) {
+  if (!state.dateMap[dateStr]) {
+    state.dateMap[dateStr] = { count: 0, titles: [] };
+  }
+  state.dateMap[dateStr].count++;
+  if (title && !state.dateMap[dateStr].titles.includes(title)) {
+    state.dateMap[dateStr].titles.push(title);
+  }
+}
+
+async function ensureMonthData(year, month) {
+  const monthStart = new Date(year, month, 1);
+
+  const fetches = CONFIG.actionTypes.map(async (type) => {
+    if (state.fullyFetched[type]) return;
+    if (state.oldestByType[type] && state.oldestByType[type] <= monthStart) return;
+
+    if (state.fetchedOffsets[type] === undefined) {
+      state.fetchedOffsets[type] = 0;
+    }
+
+    let safety = 0;
+    while (safety++ < 15) {
+      if (state.fullyFetched[type]) break;
+      if (state.oldestByType[type] && state.oldestByType[type] <= monthStart) break;
+
+      const actions = await fetchActions(
+        state.username,
+        type,
+        state.fetchedOffsets[type]
+      );
+
+      if (actions.length === 0) {
+        state.fullyFetched[type] = true;
+        break;
+      }
+
+      for (const action of actions) {
+        const dateStr = toKSTDate(action.created_at);
+        addToDateMap(dateStr, action.title);
+      }
+
+      state.fetchedOffsets[type] += actions.length;
+
+      const oldestInBatch = new Date(actions[actions.length - 1].created_at);
+      if (!state.oldestByType[type] || oldestInBatch < state.oldestByType[type]) {
+        state.oldestByType[type] = oldestInBatch;
+      }
+
+      if (actions.length < 30) {
+        state.fullyFetched[type] = true;
+        break;
+      }
+    }
+  });
+
+  await Promise.all(fetches);
+}
+
+// ═══════════════════════════════════════════════
+//  RENDERING
+// ═══════════════════════════════════════════════
+function renderCalendar() {
+  const { year, month } = state;
+  const grid = $('calendar-grid');
+  const today = todayKST();
+  const total = daysInMonth(year, month);
+  const startDay = firstDayOfMonth(year, month);
+
+  $('month-title').textContent = formatMonth(year, month);
+
+  // Build cells
+  const cells = [];
+  let popIndex = 0;
+
+  // Previous month filler
+  const prevTotal = daysInMonth(year, month - 1);
+  for (let i = startDay - 1; i >= 0; i--) {
+    const day = prevTotal - i;
+    cells.push({ day, currentMonth: false, dateStr: null });
+  }
+
+  // Current month
+  for (let d = 1; d <= total; d++) {
+    const mm = String(month + 1).padStart(2, '0');
+    const dd = String(d).padStart(2, '0');
+    const dateStr = `${year}-${mm}-${dd}`;
+    cells.push({ day: d, currentMonth: true, dateStr, isToday: dateStr === today });
+  }
+
+  // Next month filler
+  const remaining = 7 - (cells.length % 7);
+  if (remaining < 7) {
+    for (let d = 1; d <= remaining; d++) {
+      cells.push({ day: d, currentMonth: false, dateStr: null });
+    }
+  }
+
+  // Render
+  grid.innerHTML = '';
+  for (let i = 0; i < cells.length; i++) {
+    const c = cells[i];
+    const el = document.createElement('div');
+    el.className = 'day-cell';
+    el.textContent = c.day;
+
+    const col = i % 7;
+    if (col === 0) el.classList.add('sun');
+    if (col === 6) el.classList.add('sat');
+    if (c.currentMonth) el.classList.add('current-month');
+    if (c.isToday) el.classList.add('today');
+
+    const info = c.dateStr && state.dateMap[c.dateStr];
+    if (info && info.count > 0) {
+      el.classList.add('active');
+      if (info.count >= 2) el.classList.add('multi');
+      el.classList.add('grape-pop');
+      el.style.setProperty('--pop-delay', `${popIndex * 25}ms`);
+      popIndex++;
+
+      // Tooltip
+      el.addEventListener('mouseenter', (e) => showTooltip(e, c.dateStr, info));
+      el.addEventListener('mouseleave', hideTooltip);
+      el.addEventListener('click', () => {
+        window.open(`${CONFIG.discourseUrl}/u/${encodeURIComponent(state.username)}/activity/topics`, '_blank');
+      });
+    }
+
+    grid.appendChild(el);
+  }
+
+  // Calendar message
+  renderCalendarMessage(year, month, total);
+}
+
+function renderCalendarMessage(year, month, totalDays) {
+  const msgEl = $('calendar-message');
+  const activeDays = countActiveDays(year, month);
+
+  if (activeDays === 0) {
+    msgEl.innerHTML = `<div class="empty-message">
+      <div class="big">🌱</div>
+      아직 이번 달 기록이 없어요<br>
+      <span style="font-size:0.82rem; color:var(--text-muted)">첫 글을 써서 기록을 시작해보세요</span>
+    </div>`;
+  } else if (activeDays >= totalDays) {
+    msgEl.innerHTML = `<div class="full-month-msg">한 달을 가득 채웠어요!</div>`;
+  } else {
+    msgEl.innerHTML = '';
+  }
+}
+
+function countActiveDays(year, month) {
+  let count = 0;
+  const total = daysInMonth(year, month);
+  for (let d = 1; d <= total; d++) {
+    const mm = String(month + 1).padStart(2, '0');
+    const dd = String(d).padStart(2, '0');
+    const dateStr = `${year}-${mm}-${dd}`;
+    if (state.dateMap[dateStr]?.count > 0) count++;
+  }
+  return count;
+}
+
+function renderStats() {
+  const { year, month } = state;
+  const activeDays = countActiveDays(year, month);
+  const streak = calculateStreak();
+  const totalPosts = countTotalPosts(year, month);
+
+  $('stats-bar').innerHTML = `
+    <div class="stat-item">
+      <div class="stat-number">${activeDays}</div>
+      <div class="stat-label">이번 달 기록</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-number">${streak}</div>
+      <div class="stat-label">연속일</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-number">${totalPosts}</div>
+      <div class="stat-label">총 글 수</div>
+    </div>
+  `;
+}
+
+function countTotalPosts(year, month) {
+  let count = 0;
+  const total = daysInMonth(year, month);
+  for (let d = 1; d <= total; d++) {
+    const mm = String(month + 1).padStart(2, '0');
+    const dd = String(d).padStart(2, '0');
+    const dateStr = `${year}-${mm}-${dd}`;
+    count += state.dateMap[dateStr]?.count || 0;
+  }
+  return count;
+}
+
+function calculateStreak() {
+  const today = todayKST();
+  const [y, m, d] = today.split('-').map(Number);
+  let streak = 0;
+  let date = new Date(y, m - 1, d);
+
+  // If no post today, start from yesterday
+  const todayStr = today;
+  if (!state.dateMap[todayStr]?.count) {
+    date.setDate(date.getDate() - 1);
+  }
+
+  while (true) {
+    const ds = date.toLocaleDateString('en-CA', { timeZone: 'Asia/Seoul' });
+    // Use a plain YYYY-MM-DD from the local Date object
+    const yr = date.getFullYear();
+    const mo = String(date.getMonth() + 1).padStart(2, '0');
+    const dy = String(date.getDate()).padStart(2, '0');
+    const key = `${yr}-${mo}-${dy}`;
+
+    if (state.dateMap[key]?.count > 0) {
+      streak++;
+      date.setDate(date.getDate() - 1);
+    } else {
+      break;
+    }
+
+    if (streak > 365) break; // safety
+  }
+
+  return streak;
+}
+
+// ═══════════════════════════════════════════════
+//  TOOLTIP
+// ═══════════════════════════════════════════════
+function showTooltip(e, dateStr, info) {
+  const tip = $('tooltip');
+  const titles = info.titles.slice(0, 3);
+  let html = `<strong>${dateStr.replace(/-/g, '.')}</strong> · ${info.count}개`;
+  if (titles.length > 0) {
+    html += '<br>' + titles.map(t => `· ${t}`).join('<br>');
+    if (info.titles.length > 3) html += `<br>· ...외 ${info.titles.length - 3}개`;
+  }
+  tip.innerHTML = html;
+  tip.classList.add('show');
+
+  const rect = e.target.getBoundingClientRect();
+  tip.style.left = `${rect.left + rect.width / 2 - tip.offsetWidth / 2}px`;
+  tip.style.top = `${rect.top - tip.offsetHeight - 8}px`;
+}
+
+function hideTooltip() {
+  $('tooltip').classList.remove('show');
+}
+
+// ═══════════════════════════════════════════════
+//  EVENT HANDLERS
+// ═══════════════════════════════════════════════
+async function handleLogin() {
+  const input = $('username-input');
+  const username = input.value.trim();
+  if (!username) {
+    showError('아이디를 입력해주세요.');
+    return;
+  }
+
+  hideError();
+  $('login-btn').disabled = true;
+  $('login-btn').innerHTML = '<span class="spinner"></span>확인 중...';
+  $('page-loading').classList.add('show');
+
+  try {
+    // Fetch profile
+    const user = await fetchProfile(username);
+    state.username = username;
+    state.displayName = user.name || user.username;
+    state.avatarUrl = CONFIG.discourseUrl +
+      user.avatar_template.replace('{size}', '120');
+
+    // Load initial data
+    await ensureMonthData(state.year, state.month);
+
+    // Save to localStorage
+    localStorage.setItem('grape_username', username);
+
+    // Switch to app
+    showApp();
+  } catch (e) {
+    console.error('Login error:', e);
+    if (e.message?.includes('Failed to fetch') || e.message?.includes('NetworkError')) {
+      showError(
+        'Discourse 서버에 연결할 수 없습니다. CORS 설정이 필요할 수 있습니다.\n' +
+        '관리자: Discourse Admin → Settings → "cors origins"에 이 페이지의 주소를 추가해주세요.'
+      );
+    } else if (e.status === 403) {
+      if (!CONFIG.apiKey) {
+        showError(
+          'API 인증이 필요합니다.\n' +
+          '관리자: HTML 파일의 CONFIG.apiKey에 Discourse API 키를 설정해주세요.'
+        );
+      } else {
+        showError('접근 권한이 없습니다. API 키를 확인해주세요.');
+      }
+    } else if (e.status === 404) {
+      showError('사용자를 찾을 수 없습니다. 아이디를 확인해주세요.');
+    } else {
+      showError('오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+    }
+  } finally {
+    $('login-btn').disabled = false;
+    $('login-btn').textContent = '내 캘린더 보기';
+    $('page-loading').classList.remove('show');
+  }
+}
+
+function handleLogout() {
+  localStorage.removeItem('grape_username');
+  state.username = '';
+  state.displayName = '';
+  state.avatarUrl = '';
+  state.dateMap = {};
+  state.fetchedOffsets = {};
+  state.fullyFetched = {};
+  state.oldestByType = {};
+  state.year = new Date().getFullYear();
+  state.month = new Date().getMonth();
+
+  $('app-screen').classList.remove('active');
+  $('login-screen').classList.remove('hidden');
+  $('username-input').value = '';
+}
+
+async function navigateMonth(dir) {
+  state.month += dir;
+  if (state.month < 0) { state.month = 11; state.year--; }
+  if (state.month > 11) { state.month = 0; state.year++; }
+
+  $('page-loading').classList.add('show');
+  try {
+    await ensureMonthData(state.year, state.month);
+  } catch (e) {
+    console.error('Navigate error:', e);
+  }
+  $('page-loading').classList.remove('show');
+
+  renderCalendar();
+  renderStats();
+}
+
+// ═══════════════════════════════════════════════
+//  UI HELPERS
+// ═══════════════════════════════════════════════
+function showApp() {
+  $('login-screen').classList.add('hidden');
+  $('app-screen').classList.add('active');
+  if (state.avatarUrl) {
+    $('user-avatar').src = state.avatarUrl;
+    $('user-avatar').style.display = '';
+  } else {
+    $('user-avatar').style.display = 'none';
+  }
+  $('user-avatar').alt = state.displayName;
+  $('user-display-name').textContent = state.displayName;
+
+
+  renderCalendar();
+  renderStats();
+}
+
+function showError(msg) {
+  const el = $('login-error');
+  el.textContent = msg;
+  el.classList.add('show');
+}
+function hideError() {
+  $('login-error').classList.remove('show');
+}
+
+// ═══════════════════════════════════════════════
+//  TEST LOGIN (더미 데이터)
+// ═══════════════════════════════════════════════
+function handleTestLogin() {
+  state.username = '테스트';
+  state.displayName = '포도 농부';
+  state.avatarUrl = '';
+  state.year = new Date().getFullYear();
+  state.month = new Date().getMonth();
+
+  // 더미 데이터: 이번 달 + 지난 달 랜덤 기록
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = now.getMonth();
+
+  // 이번 달 - 오늘까지 중 70% 확률로 글 작성
+  const today = now.getDate();
+  for (let d = 1; d <= today; d++) {
+    if (Math.random() < 0.7) {
+      const mm = String(m + 1).padStart(2, '0');
+      const dd = String(d).padStart(2, '0');
+      const key = `${y}-${mm}-${dd}`;
+      const count = Math.random() < 0.2 ? 2 : 1;
+      state.dateMap[key] = {
+        count,
+        titles: count === 2
+          ? ['오늘의 글쓰기', '독서 기록']
+          : ['오늘의 글쓰기']
+      };
+    }
+  }
+
+  // 지난 달 - 60% 확률
+  const prevMonth = m === 0 ? 11 : m - 1;
+  const prevYear = m === 0 ? y - 1 : y;
+  const prevDays = daysInMonth(prevYear, prevMonth);
+  for (let d = 1; d <= prevDays; d++) {
+    if (Math.random() < 0.6) {
+      const mm = String(prevMonth + 1).padStart(2, '0');
+      const dd = String(d).padStart(2, '0');
+      const key = `${prevYear}-${mm}-${dd}`;
+      state.dateMap[key] = { count: 1, titles: ['오늘의 글쓰기'] };
+    }
+  }
+
+  // 모든 타입을 fetched로 마킹 (API 호출 방지)
+  CONFIG.actionTypes.forEach(t => { state.fullyFetched[t] = true; });
+
+  showApp();
+}
+
+// ═══════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════
+function init() {
+  // Enter key on input
+  $('username-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') handleLogin();
+  });
+
+  // Auto-login from localStorage
+  const saved = localStorage.getItem('grape_username');
+  if (saved) {
+    $('username-input').value = saved;
+    handleLogin();
+  }
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+
+</body>
+</html>
